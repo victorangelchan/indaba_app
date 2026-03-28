@@ -8,44 +8,39 @@ from PIL import Image
 # CONFIGURACIÓN DE LA APP
 # ==========================
 st.set_page_config(page_title="INTERFAZ DE CONSULTAS INDABA", layout="wide")
-st.title("INTERFAZ DE CONSULTAS INDABA")
 
 # ==========================
-# LOGO
+# CONTRASEÑA
 # ==========================
+password_correct = "Indaba.2026"  # cambia aquí tu contraseña
+
+password = st.text_input("Introduce la contraseña", type="password")
+
+if password != password_correct:
+    st.warning("🔒 Contraseña incorrecta")
+    st.stop()  # detiene la ejecución si no coincide
+
+# ==========================
+# TÍTULO Y LOGO
+# ==========================
+st.title("INTERFAZ DE CONSULTAS INDABA")
 logo = Image.open("INDABA_LOGO_2026.png")
 st.sidebar.image(logo, width=200)
 
 # ==========================
-# CARGAR DATOS Y TRADUCIR IDs
+# CARGAR DATOS
 # ==========================
 @st.cache_data
 def load_data():
     conn = sqlite3.connect("INDABA.db")
-    
     carriers = pd.read_sql_query("SELECT * FROM CARRIERS", conn)
     services = pd.read_sql_query("SELECT * FROM SERVICES", conn)
     invoices = pd.read_sql_query("SELECT * FROM INVOICES", conn)
-    
     conn.close()
 
-    invoices = invoices.merge(
-        carriers[['CARRIER_ID', 'CARRIER_NAME']],
-        on='CARRIER_ID',
-        how='left'
-    )
-    
-    invoices = invoices.merge(
-        services[['SERVICE_ID', 'SERVICE_NAME']],
-        on='SERVICE_ID',
-        how='left'
-    )
-    
-    invoices['DATE_INVOICE'] = pd.to_datetime(
-        invoices['DATE_INVOICE'],
-        errors='coerce'
-    )
-    
+    invoices = invoices.merge(carriers[['CARRIER_ID', 'CARRIER_NAME']], on='CARRIER_ID', how='left')
+    invoices = invoices.merge(services[['SERVICE_ID', 'SERVICE_NAME']], on='SERVICE_ID', how='left')
+    invoices['DATE_INVOICE'] = pd.to_datetime(invoices['DATE_INVOICE'], errors='coerce')
     return invoices
 
 df = load_data()
@@ -104,9 +99,6 @@ if start_date and end_date:
         (df_filtered['DATE_INVOICE'] <= pd.to_datetime(end_date))
     ]
 
-# ==========================
-# RESULTADOS
-# ==========================
 st.subheader(f"Resultados: {len(df_filtered)} registros encontrados")
 st.dataframe(df_filtered)
 
@@ -115,18 +107,18 @@ st.dataframe(df_filtered)
 # ==========================
 st.subheader("Gráficas de Cost")
 
-group_options = [
-    "DATE_INVOICE",
-    "CARRIER_NAME",
-    "FROM_COUNTRY",
-    "TO_COUNTRY",
-    "PROGRAM",
-    "ITEM"
-]
-
+group_options = ["DATE_INVOICE", "CARRIER_NAME", "FROM_COUNTRY", "TO_COUNTRY", "PROGRAM", "ITEM"]
 group_by_option = st.selectbox("Agrupar por", group_options)
 
-df_grouped = df_filtered.groupby(group_by_option)['COST'].sum().reset_index()
+# Elegir tipo de agregación
+agg_option = st.radio("Mostrar:", ["Sumatorio", "Media", "Mediana"])
+
+if agg_option == "Sumatorio":
+    df_grouped = df_filtered.groupby(group_by_option)['COST'].sum().reset_index()
+elif agg_option == "Media":
+    df_grouped = df_filtered.groupby(group_by_option)['COST'].mean().reset_index()
+else:
+    df_grouped = df_filtered.groupby(group_by_option)['COST'].median().reset_index()
 
 bars = alt.Chart(df_grouped).mark_bar().encode(
     x=group_by_option,
@@ -143,11 +135,16 @@ text = bars.mark_text(
 )
 
 chart = (bars + text).interactive()
-
 st.altair_chart(chart, use_container_width=True)
 
 
 #--- PARA ACTUALIZAR BD
 #git add INDABA.db
 #git commit -m "Auto update BD"
+#git push
+
+
+#--- PARA ACTUALIZAR .PY
+#git add INDABA_STREAMLIT.py
+#git commit -m "Actualizar script INDABA_STREAMLIT.py"
 #git push

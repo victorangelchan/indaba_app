@@ -145,3 +145,9 @@ text = bars.mark_text(
 chart = (bars + text).interactive()
 
 st.altair_chart(chart, use_container_width=True)
+
+
+#--- PARA ACTUALIZAR BD
+#git add INDABA.db
+#git commit -m "Auto update BD"
+#git push

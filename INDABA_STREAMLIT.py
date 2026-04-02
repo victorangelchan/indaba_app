@@ -107,7 +107,7 @@ st.dataframe(df_filtered)
 # ==========================
 st.subheader("Gráficas de Cost")
 
-group_options = ["DATE_INVOICE", "CARRIER_NAME", "FROM_COUNTRY", "TO_COUNTRY", "PROGRAM", "ITEM"]
+group_options = ["DATE_INVOICE", "CARRIER_NAME", "FROM_COUNTRY", "TO_COUNTRY", "PROGRAM", "ITEM", "INVOICE_NUMBER"]
 group_by_option = st.selectbox("Agrupar por", group_options)
 
 # Elegir tipo de agregación
@@ -146,5 +146,5 @@ st.altair_chart(chart, use_container_width=True)
 
 #--- PARA ACTUALIZAR .PY
 #git add INDABA_STREAMLIT.py
-#git commit -m "Actualizar script INDABA_STREAMLIT.py"
-#git push
+#git commit -m "Tu mensaje de cambio"
+#git push origin main
